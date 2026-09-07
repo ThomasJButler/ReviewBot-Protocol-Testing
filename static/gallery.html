@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fractal gallery</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1d1d1d; }
+    h1 { margin-bottom: 0.5rem; }
+    #status-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #cccccc;
+      vertical-align: middle;
+    }
+    #refresh {
+      display: inline-block;
+      margin-left: 1rem;
+      padding: 0.4rem 0.9rem;
+      border: 1px solid #888888;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .render { margin-top: 1.5rem; }
+    .render h2 { font-size: 1.1rem; margin: 0 0 0.5rem 0; }
+    .render img { max-width: 320px; border: 1px solid #dddddd; }
+  </style>
+</head>
+<body>
+  <h1>Fractal gallery</h1>
+  <p>Every image the server has rendered and saved so far.</p>
+  <p>
+    <span id="status-dot"></span>
+    <div id="refresh" onclick="loadRenders()">Refresh</div>
+  </p>
+  <div id="render-list"></div>
+  <script src="/static/gallery.js"></script>
+</body>
+</html>

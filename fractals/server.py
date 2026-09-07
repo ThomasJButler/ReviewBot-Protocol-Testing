@@ -1,6 +1,7 @@
 """A small HTTP wrapper around the Mandelbrot renderer."""
 
 import io
+import json
 import os
 
 from flask import Flask, request, send_file
@@ -11,6 +12,7 @@ app = Flask(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RENDERS_DIR = os.path.join(PROJECT_ROOT, "renders")
+STATIC_DIR = os.path.join(PROJECT_ROOT, "static")
 
 
 def parse_float(name, default):
@@ -42,6 +44,35 @@ def render_endpoint():
     image.save(buffer, format="PNG")
     buffer.seek(0)
     return send_file(buffer, mimetype="image/png")
+
+
+@app.route("/")
+def gallery_page():
+    """Serve the gallery page."""
+    return send_file(os.path.join(STATIC_DIR, "gallery.html"))
+
+
+@app.route("/static/gallery.js")
+def gallery_script():
+    """Serve the script used by the gallery page."""
+    return send_file(os.path.join(STATIC_DIR, "gallery.js"))
+
+
+@app.route("/api/renders")
+def renders_index():
+    """Return the list of saved renders described by renders/index.json."""
+    index_path = os.path.join(RENDERS_DIR, "index.json")
+    if not os.path.exists(index_path):
+        return []
+    with open(index_path, "r", encoding="utf-8") as handle:
+        entries = json.load(handle)
+    return entries
+
+
+@app.route("/renders/<name>")
+def saved_render(name):
+    """Return one image that was saved by an earlier request."""
+    return send_file(os.path.join(RENDERS_DIR, name))
 
 
 if __name__ == "__main__":
