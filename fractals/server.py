@@ -2,9 +2,11 @@
 
 import io
 import os
+import pickle
 
 from flask import Flask, request, send_file
 
+from fractals import cache
 from fractals.mandelbrot import render
 
 app = Flask(__name__)
@@ -21,6 +23,15 @@ def parse_float(name, default):
     return float(raw)
 
 
+def validate_dimensions(width, height):
+    """Return True when the requested image size is sensible."""
+    if width < 1 or height < 1:
+        return False
+    if width > 2000 or height > 2000:
+        return False
+    return True
+
+
 @app.route("/render")
 def render_endpoint():
     """Render an image from the query parameters and return it as a PNG."""
@@ -31,6 +42,22 @@ def render_endpoint():
     centre_y = parse_float("cy", 0.0)
     zoom = parse_float("zoom", 1.0)
 
+    if not validate_dimensions(width, height):
+        return "that image size is out of range", 400
+
+    params = {
+        "width": width,
+        "height": height,
+        "max_iter": max_iter,
+        "cx": centre_x,
+        "cy": centre_y,
+        "zoom": zoom,
+    }
+    key = cache.cache_key(params)
+    cached_png = cache.load(key)
+    if cached_png is not None:
+        return send_file(io.BytesIO(cached_png), mimetype="image/png")
+
     image = render(width, height, max_iter, centre_x, centre_y, zoom)
 
     save_name = request.args.get("save")
@@ -40,8 +67,10 @@ def render_endpoint():
 
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
-    buffer.seek(0)
-    return send_file(buffer, mimetype="image/png")
+    png_bytes = buffer.getvalue()
+    cache.store(key, params, png_bytes)
+
+    return send_file(io.BytesIO(png_bytes), mimetype="image/png")
 
 
 if __name__ == "__main__":
